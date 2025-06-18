@@ -2,106 +2,99 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Agenda; // Impor model Agenda
-use App\Models\User;   // Impor model User (jika ingin mengakses relasi user)
+use App\Models\Agenda;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Untuk mendapatkan user yang login
-// Hapus import untuk Http dan Log yang digunakan untuk Gemini API
+use Illuminate\Support\Facades\Auth;
 
 class AgendaController extends Controller
 {
     /**
-     * Menampilkan daftar semua agenda rapat (untuk Admin).
-     * Jika user adalah guru, hanya tampilkan agenda yang dibuatnya.
-     *
-     * @return \Illuminate\View\View
+     * Menampilkan daftar semua agenda rapat.
+     * Admin melihat semua agenda.
+     * Guru (jika diarahkan ke sini) hanya melihat agenda yang dibuatnya.
      */
     public function index()
     {
-        // Admin melihat semua agenda, Guru hanya melihat agenda yang dibuatnya sendiri
-        $agendas = Agenda::when(Auth::user()->role === 'guru', function ($query) {
-            $query->where('user_id', Auth::id());
-        })->get();
+        $agendas = Agenda::with('user')
+            ->when(Auth::user()->role === 'guru', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->latest()
+            ->get();
+        
         return view('agendas.index', compact('agendas'));
     }
 
     /**
      * Menampilkan form untuk membuat agenda baru.
-     *
-     * @return \Illuminate\View\View
      */
     public function create()
     {
-        return view('agendas.create');
+        return view('agendas.create', [
+            'agenda' => new Agenda()
+        ]);
     }
 
     /**
      * Menyimpan agenda baru ke database.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            // Tambahkan validasi untuk meeting_date, meeting_time jika ada di form
+            'meeting_date' => 'required|date',
+            'meeting_time' => 'required|date_format:H:i',
         ]);
 
-        // Membuat entri agenda baru
         Agenda::create([
             'title' => $request->title,
             'description' => $request->description,
-            'user_id' => Auth::id(), // Menyimpan ID user yang membuat agenda
-            // Pastikan Anda menambahkan meeting_date dan meeting_time di sini jika ada di form
+            'meeting_date' => $request->meeting_date,
+            'meeting_time' => $request->meeting_time,
+            'user_id' => Auth::id(),
         ]);
 
         return redirect()->route('agendas.index')->with('success', 'Agenda berhasil ditambahkan!');
     }
 
     /**
-     * Menampilkan form untuk mengedit agenda tertentu.
-     *
-     * @param  \App\Models\Agenda  $agenda
-     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     * Menampilkan form untuk mengedit agenda.
      */
     public function edit(Agenda $agenda)
     {
-        // Pastikan hanya admin atau user yang membuat agenda yang bisa mengedit
-        if (Auth::user()->role !== 'admin' && Auth::id() !== $agenda->user_id) {
-            return redirect()->route('agendas.index')->with('error', 'Anda tidak memiliki izin untuk mengedit agenda ini.');
+        // Otorisasi: Hanya admin atau pemilik agenda yang boleh mengedit.
+        if (auth()->user()->role !== 'admin' && auth()->id() !== $agenda->user_id) {
+            abort(403, 'ANDA TIDAK DIIZINKAN MENGAKSES HALAMAN INI.');
         }
-        return view('agendas.edit', compact('agenda'));
+
+        return view('agendas.edit', [
+            'agenda' => $agenda
+        ]);
     }
 
     /**
      * Memperbarui data agenda di database.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Agenda  $agenda
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, Agenda $agenda)
     {
-        // Pastikan hanya admin atau user yang membuat agenda yang bisa mengupdate
-        if (Auth::user()->role !== 'admin' && Auth::id() !== $agenda->user_id) {
-            return redirect()->route('agendas.index')->with('error', 'Anda tidak memiliki izin untuk memperbarui agenda ini.');
+        // Otorisasi: Hanya admin atau pemilik agenda yang boleh memperbarui.
+        if (auth()->user()->role !== 'admin' && auth()->id() !== $agenda->user_id) {
+            abort(403, 'ANDA TIDAK DIIZINKAN MELAKUKAN AKSI INI.');
         }
 
-        // Validasi input
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            // Tambahkan validasi untuk meeting_date, meeting_time jika ada
+            'meeting_date' => 'required|date',
+            'meeting_time' => 'required|date_format:H:i',
         ]);
 
-        // Memperbarui entri agenda
         $agenda->update([
             'title' => $request->title,
             'description' => $request->description,
-            // Pastikan Anda menambahkan meeting_date dan meeting_time di sini jika ada di form
+            'meeting_date' => $request->meeting_date,
+            'meeting_time' => $request->meeting_time,
         ]);
 
         return redirect()->route('agendas.index')->with('success', 'Agenda berhasil diperbarui!');
@@ -109,29 +102,27 @@ class AgendaController extends Controller
 
     /**
      * Menghapus agenda dari database.
-     *
-     * @param  \App\Models\Agenda  $agenda
-     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(Agenda $agenda)
     {
-        // Pastikan hanya admin atau user yang membuat agenda yang bisa menghapus
-        if (Auth::user()->role !== 'admin' && Auth::id() !== $agenda->user_id) {
-            return redirect()->route('agendas.index')->with('error', 'Anda tidak memiliki izin untuk menghapus agenda ini.');
+        // Otorisasi: Hanya admin atau pemilik agenda yang boleh menghapus.
+        if (auth()->user()->role !== 'admin' && auth()->id() !== $agenda->user_id) {
+            abort(403, 'ANDA TIDAK DIIZINKAN MELAKUKAN AKSI INI.');
         }
+        
         $agenda->delete();
-        return redirect()->route('agendas.index')->with('success', 'Agenda berhasil dihapus!');
+
+        return redirect()->route('agendas.index')->with('success', 'Agenda berhasil dihapus.');
     }
 
     /**
-     * Menampilkan daftar agenda rapat untuk guru (hanya lihat).
-     * Guru dapat melihat semua agenda rapat.
-     *
-     * @return \Illuminate\View\View
+     * Menampilkan daftar agenda untuk guru.
      */
     public function guruIndex()
     {
-        $agendas = Agenda::all(); // Guru melihat semua agenda
+        // Method ini sepertinya belum digunakan di rute, namun saya biarkan
+        // jika Anda memerlukannya nanti. Asumsinya adalah guru melihat semua agenda.
+        $agendas = Agenda::latest()->get();
         return view('agendas.guru_index', compact('agendas'));
     }
 }

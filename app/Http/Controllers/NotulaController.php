@@ -28,8 +28,14 @@ class NotulaController extends Controller
      */
     public function create()
     {
-        $agendas = Agenda::all(); // Mengambil semua agenda untuk dropdown pilihan
-        return view('notulas.create', compact('agendas'));
+        // Mengambil semua agenda untuk ditampilkan di dropdown pilihan
+        $agendas = \App\Models\Agenda::all();
+    
+        // Membuat instance Notula baru yang kosong untuk di-passing ke form
+        $notula = new \App\Models\Notula();
+
+        // Mengirim variabel agendas dan notula ke view
+        return view('notulas.create', compact('agendas', 'notula'));
     }
 
     /**
