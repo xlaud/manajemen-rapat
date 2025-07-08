@@ -9,29 +9,30 @@ class Presensi extends Model
 {
     use HasFactory;
 
-    protected $table = 'presensi'; // Pastikan nama tabel benar, karena bukan 'presensis'
+    // Mendefinisikan nama tabel secara eksplisit jika berbeda dari konvensi
+    protected $table = 'presensi';
 
     // Kolom-kolom yang dapat diisi secara massal
     protected $fillable = [
-        'user_id',   // Foreign key ke tabel users (guru yang presensi)
-        'agenda_id', // Foreign key ke tabel agendas (agenda rapat terkait)
+        'user_id',
+        'agenda_id',
         'status',
-        'notes',
-        'presensi_time',
+        'keterangan',
     ];
 
-    // Casting atribut untuk tipe data Carbon (objek tanggal dan waktu)
-    protected $casts = [
-        'presensi_time' => 'datetime',
-    ];
-
-    // Definisi relasi: Satu presensi milik satu User
+    /**
+     * Mendefinisikan relasi "belongsTo" ke model User.
+     * Setiap data presensi dimiliki oleh satu User.
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Definisi relasi: Satu presensi terkait dengan satu Agenda
+    /**
+     * Mendefinisikan relasi "belongsTo" ke model Agenda.
+     * Setiap data presensi dimiliki oleh satu Agenda.
+     */
     public function agenda()
     {
         return $this->belongsTo(Agenda::class);

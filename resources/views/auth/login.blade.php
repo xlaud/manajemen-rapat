@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Manajemen Rapat</title>
 
-    {{-- Impor Font --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    {{-- Memuat Aset dari Vite --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <style>
@@ -44,7 +41,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
+            <form action="{{ route('login') }}" method="POST" class="space-y-6">
                 @csrf
                 <div>
                     <label for="email" class="block text-sm font-medium text-slate-700">Email</label>

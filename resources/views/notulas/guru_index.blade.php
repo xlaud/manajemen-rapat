@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Notula Rapat (Lihat Saja)</h2>
+    <h2 class="text-3xl font-bold text-gray-800 mb-6">Notula Rapat</h2>
 
     <div class="overflow-x-auto">
         @if($notulas->count() > 0)

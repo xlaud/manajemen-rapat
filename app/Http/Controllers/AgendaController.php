@@ -9,20 +9,35 @@ use Illuminate\Support\Facades\Auth;
 class AgendaController extends Controller
 {
     /**
-     * Menampilkan daftar semua agenda rapat.
-     * Admin melihat semua agenda.
-     * Guru (jika diarahkan ke sini) hanya melihat agenda yang dibuatnya.
+     * Menampilkan daftar semua agenda rapat untuk Admin.
      */
     public function index()
     {
-        $agendas = Agenda::with('user')
-            ->when(Auth::user()->role === 'guru', function ($query) {
-                $query->where('user_id', Auth::id());
-            })
-            ->latest()
-            ->get();
-        
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'ANDA TIDAK MEMILIKI AKSES KE HALAMAN INI.');
+        }
+
+        $agendas = Agenda::with('user')->latest()->get();
         return view('agendas.index', compact('agendas'));
+    }
+
+    /**
+     * Menampilkan daftar agenda untuk Guru.
+     */
+    public function guruIndex()
+    {
+        $agendas = Agenda::with('presensi')->latest()->get();
+        return view('agendas.guru_index', compact('agendas'));
+    }
+    
+    /**
+     * Menampilkan detail agenda beserta daftar hadirnya (untuk Admin).
+     */
+    public function show(Agenda $agenda)
+    {
+        $agenda->load('presensi.user');
+        
+        return view('admin.agendas.show', compact('agenda'));
     }
 
     /**
@@ -47,13 +62,7 @@ class AgendaController extends Controller
             'meeting_time' => 'required|date_format:H:i',
         ]);
 
-        Agenda::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'meeting_date' => $request->meeting_date,
-            'meeting_time' => $request->meeting_time,
-            'user_id' => Auth::id(),
-        ]);
+        Agenda::create(array_merge($request->all(), ['user_id' => Auth::id()]));
 
         return redirect()->route('agendas.index')->with('success', 'Agenda berhasil ditambahkan!');
     }
@@ -63,8 +72,7 @@ class AgendaController extends Controller
      */
     public function edit(Agenda $agenda)
     {
-        // Otorisasi: Hanya admin atau pemilik agenda yang boleh mengedit.
-        if (auth()->user()->role !== 'admin' && auth()->id() !== $agenda->user_id) {
+        if (auth()->user()->role !== 'admin') {
             abort(403, 'ANDA TIDAK DIIZINKAN MENGAKSES HALAMAN INI.');
         }
 
@@ -78,8 +86,7 @@ class AgendaController extends Controller
      */
     public function update(Request $request, Agenda $agenda)
     {
-        // Otorisasi: Hanya admin atau pemilik agenda yang boleh memperbarui.
-        if (auth()->user()->role !== 'admin' && auth()->id() !== $agenda->user_id) {
+        if (auth()->user()->role !== 'admin') {
             abort(403, 'ANDA TIDAK DIIZINKAN MELAKUKAN AKSI INI.');
         }
 
@@ -90,12 +97,7 @@ class AgendaController extends Controller
             'meeting_time' => 'required|date_format:H:i',
         ]);
 
-        $agenda->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'meeting_date' => $request->meeting_date,
-            'meeting_time' => $request->meeting_time,
-        ]);
+        $agenda->update($request->all());
 
         return redirect()->route('agendas.index')->with('success', 'Agenda berhasil diperbarui!');
     }
@@ -105,24 +107,12 @@ class AgendaController extends Controller
      */
     public function destroy(Agenda $agenda)
     {
-        // Otorisasi: Hanya admin atau pemilik agenda yang boleh menghapus.
-        if (auth()->user()->role !== 'admin' && auth()->id() !== $agenda->user_id) {
+        if (auth()->user()->role !== 'admin') {
             abort(403, 'ANDA TIDAK DIIZINKAN MELAKUKAN AKSI INI.');
         }
         
         $agenda->delete();
 
         return redirect()->route('agendas.index')->with('success', 'Agenda berhasil dihapus.');
-    }
-
-    /**
-     * Menampilkan daftar agenda untuk guru.
-     */
-    public function guruIndex()
-    {
-        // Method ini sepertinya belum digunakan di rute, namun saya biarkan
-        // jika Anda memerlukannya nanti. Asumsinya adalah guru melihat semua agenda.
-        $agendas = Agenda::latest()->get();
-        return view('agendas.guru_index', compact('agendas'));
     }
 }

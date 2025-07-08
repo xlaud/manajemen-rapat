@@ -17,9 +17,8 @@
                 $table->id();
                 $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Guru yang presensi
                 $table->foreignId('agenda_id')->constrained('agendas')->onDelete('cascade'); // Agenda terkait
-                $table->enum('status', ['Hadir', 'Izin', 'Sakit', 'Alpha']);
-                $table->text('notes')->nullable();
-                $table->timestamp('presensi_time'); // Waktu presensi
+                $table->enum('status', ['hadir', 'tidak_hadir', 'izin']);
+                $table->text('keterangan')->nullable();
                 $table->timestamps();
             });
         }

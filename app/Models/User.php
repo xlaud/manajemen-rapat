@@ -40,10 +40,9 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed', // Laravel 10+ otomatis mengenkripsi password
+        'password' => 'hashed', 
     ];
 
-    // Jika Anda ingin mendefinisikan relasi (misalnya, user memiliki banyak agenda)
     public function agendas()
     {
         return $this->hasMany(Agenda::class);
