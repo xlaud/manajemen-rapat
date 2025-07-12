@@ -2,40 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Presensi; 
-use App\Models\Agenda;  
+use App\Models\Agenda;
+use App\Models\Presensi;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 
 class PresensiController extends Controller
 {
     /**
-     * Menampilkan rekap presensi yang dikelompokkan per agenda (untuk Admin).
+     * Menampilkan halaman rekapitulasi presensi untuk Admin.
      */
     public function index()
     {
-        $agendas = Agenda::with('presensi.user')->latest()->get();
+        // Ambil semua agenda, dan sertakan relasi 'presensi' beserta data 'user' 
+        $agendas = Agenda::with('presensi.user')->latest('meeting_date')->get();
         
-        // Mengirim variabel $agendas (bukan $presensi) ke view.
         return view('presensi.index', compact('agendas'));
     }
 
     /**
-     * Menampilkan form presensi untuk agenda tertentu.
+     * Menampilkan form untuk GURU mengisi presensinya sendiri.
      */
     public function createForGuru(Agenda $agenda)
     {
-        // Cek apakah guru sudah pernah mengisi presensi untuk agenda ini
-        $existingPresensi = $agenda->presensi()->where('user_id', Auth::id())->first();
+        // Cek apakah guru yang sedang login sudah pernah mengisi presensi
+        $existingPresensi = Presensi::where('agenda_id', $agenda->id)
+                                    ->where('user_id', Auth::id())
+                                    ->first();
 
-        return view('presensi.create', [
-            'agenda' => $agenda,
-            'existingPresensi' => $existingPresensi
-        ]);
+        return view('presensi.create', compact('agenda', 'existingPresensi'));
     }
 
     /**
-     * Menyimpan data presensi untuk agenda tertentu.
+     * Menyimpan data presensi yang diisi oleh GURU.
      */
     public function storeForGuru(Request $request, Agenda $agenda)
     {
@@ -45,18 +44,22 @@ class PresensiController extends Controller
         ]);
 
         // Cek lagi untuk mencegah pengisian ganda
-        $alreadyExists = $agenda->presensi()->where('user_id', Auth::id())->exists();
+        $alreadyExists = Presensi::where('agenda_id', $agenda->id)
+                                 ->where('user_id', Auth::id())
+                                 ->exists();
+
         if ($alreadyExists) {
             return redirect()->route('agendas.guru')->with('error', 'Anda sudah mengisi presensi untuk agenda ini.');
         }
 
-        // Simpan data presensi ke database, terhubung dengan agenda yang benar
-        $agenda->presensi()->create([
+        // Simpan data presensi
+        Presensi::create([
+            'agenda_id' => $agenda->id,
             'user_id' => Auth::id(),
             'status' => $request->status,
             'keterangan' => $request->keterangan,
         ]);
 
-        return redirect()->route('agendas.guru')->with('success', 'Presensi berhasil dicatat. Terima kasih.');
+        return redirect()->route('agendas.guru')->with('success', 'Presensi berhasil dicatat.');
     }
 }

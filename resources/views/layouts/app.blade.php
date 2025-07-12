@@ -8,6 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    {{-- CSS untuk DataTables --}}
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.10/css/dataTables.tailwindcss.css">
+    
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -24,9 +28,6 @@
             </a>
             <div class="flex items-center space-x-4">
                 @auth
-                    <span class="text-sm font-medium hidden sm:block">
-                        ID: <span class="font-semibold bg-blue-700 rounded-md px-2 py-1">{{ Auth::user()->id }}</span>
-                    </span>
                     <span class="text-sm font-medium">
                         Peran: <span class="font-semibold bg-blue-700 rounded-md px-2 py-1 capitalize">{{ Auth::user()->role }}</span>
                     </span>
@@ -73,14 +74,6 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-days"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
                         <span>Lihat Agenda</span>
                     </a>
-                    
-                    {{-- == INI LINK YANG DIHAPUS ==
-                    <a href="{{ route('presensi.create') }}" ...>
-                        ...
-                        <span>Isi Presensi</span>
-                    </a>
-                    --}}
-
                     <a href="{{ route('notulas.guru') }}" class="flex items-center space-x-2 px-3 py-2 rounded-lg transition duration-300 ease-in-out text-sm {{ request()->routeIs('notulas.guru') ? 'bg-blue-900 text-white shadow-md' : 'text-blue-100 hover:bg-blue-700 hover:text-white' }}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
                         <span>Lihat Notula</span>
@@ -95,5 +88,16 @@
         @include('components.message')
         @yield('content')
     </main>
+
+    {{-- Pastikan urutan pemanggilan script sudah benar --}}
+    {{-- 1. jQuery --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    
+    {{-- 2. DataTables JS --}}
+    <script src="https://cdn.datatables.net/2.0.10/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.0.10/js/dataTables.tailwindcss.js"></script>
+
+    {{-- 3. Script khusus dari setiap halaman (seperti accordion) --}}
+    @stack('scripts')
 </body>
 </html>

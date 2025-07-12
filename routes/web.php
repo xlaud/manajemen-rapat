@@ -25,7 +25,8 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('agendas', AgendaController::class);
         Route::resource('notulas', NotulaController::class);
-        Route::resource('presensi', PresensiController::class)->only(['index', 'edit', 'update', 'destroy']);
+        // Admin hanya bisa melihat rekap presensi (index)
+        Route::resource('presensi', PresensiController::class)->only(['index']); 
         Route::resource('dokumentasi', DokumentasiController::class);
         Route::get('dokumentasi/{dokumentasi}/download', [DokumentasiController::class, 'download'])->name('dokumentasi.download');
     });
@@ -35,7 +36,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('guru/agendas', [AgendaController::class, 'guruIndex'])->name('agendas.guru');
         Route::get('guru/notulas', [NotulaController::class, 'guruIndex'])->name('notulas.guru');
         
-        // URL-nya menjadi /agendas/{id}/presensi/isi, sehingga tidak akan konflik
         Route::get('agendas/{agenda}/presensi/isi', [PresensiController::class, 'createForGuru'])->name('presensi.create');
         Route::post('agendas/{agenda}/presensi/isi', [PresensiController::class, 'storeForGuru'])->name('presensi.store');
     });

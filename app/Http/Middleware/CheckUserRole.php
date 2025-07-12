@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Untuk mengakses data pengguna yang login
+use Illuminate\Support\Facades\Auth;
 
 class CheckUserRole
 {
@@ -12,26 +12,27 @@ class CheckUserRole
      * Menangani permintaan masuk.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @param  string  $role  // Parameter role yang akan dilewatkan dari rute (misal: 'admin', 'guru')
+     * @param  \Closure  $next
+     * @param  string ...$roles  // PERUBAHAN: Menggunakan spread operator untuk menerima beberapa peran
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        // memeriksa apakah pengguna sudah login
+        // Memeriksa apakah pengguna sudah login
         if (!Auth::check()) {
-            // Jika belum login, redirect ke halaman login dengan pesan error
             return redirect('/')->with('error', 'Anda harus login untuk mengakses halaman ini.');
         }
 
-        // memeriksa apakah role pengguna yang login sesuai dengan role yang dibutuhkan
-        //    Auth::user()->role akan mengambil nilai dari kolom 'role' di tabel users
-        if (Auth::user()->role !== $role) {
-            // Jika role tidak sesuai, redirect ke dashboard (atau halaman lain) dengan pesan error
+        // Mengambil peran pengguna yang sedang login
+        $userRole = Auth::user()->role;
+
+        // Memeriksa apakah peran pengguna ada di dalam daftar peran yang diizinkan
+        if (!in_array($userRole, $roles)) {
+            // Jika peran tidak ada dalam daftar, redirect dengan pesan error
             return redirect('/dashboard')->with('error', 'Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
 
-        // Jika semua pemeriksaan berhasil, lanjutkan permintaan ke controller
+        // Jika peran sesuai, lanjutkan permintaan
         return $next($request);
     }
 }
