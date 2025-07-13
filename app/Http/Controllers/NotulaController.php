@@ -6,7 +6,7 @@ use App\Models\Notula;
 use App\Models\Agenda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage; // Ditambahkan untuk mengelola file
+use Illuminate\Support\Facades\Storage;
 
 class NotulaController extends Controller
 {
@@ -15,23 +15,19 @@ class NotulaController extends Controller
      */
     public function index(Request $request)
     {
-        // Ambil kata kunci pencarian dari URL
         $search = $request->query('search');
 
-        // Query dasar untuk notula
         $notulas = Notula::query()
             ->with(['agenda', 'user']) // Eager load relasi agenda dan user
             ->latest()
-            // Tambahkan kondisi pencarian jika ada
             ->when($search, function ($query, $search) {
-                // Cari di judul notula, atau di judul agenda terkait
                 return $query->where('title', 'like', "%{$search}%")
                              ->orWhere('description', 'like', "%{$search}%")
                              ->orWhereHas('agenda', function ($q) use ($search) {
                                  $q->where('title', 'like', "%{$search}%");
                              });
             })
-            ->paginate(10); // Ganti all() dengan paginate()
+            ->paginate(10);
 
         return view('notulas.index', compact('notulas'));
     }
@@ -41,7 +37,6 @@ class NotulaController extends Controller
      */
     public function guruIndex(Request $request)
     {
-        // Ambil kata kunci pencarian
         $search = $request->query('search');
 
         $notulas = Notula::query()
@@ -57,6 +52,15 @@ class NotulaController extends Controller
             ->paginate(10);
 
         return view('notulas.guru_index', compact('notulas'));
+    }
+
+    /**
+     * Menampilkan detail notula untuk Guru.
+     */
+    public function guruShow(Notula $notula)
+    {
+        $notula->load(['agenda', 'user']);
+        return view('notulas.show', compact('notula'));
     }
 
     /**

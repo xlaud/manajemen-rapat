@@ -12,7 +12,7 @@
 
     {{-- Pencarian Agenda --}}
     <div class="mt-4">
-        <form action="{{ route('agendas.guru.index') }}" method="GET" class="w-full">
+        <form action="{{ route('agendas.guru') }}" method="GET" class="w-full">
             <div class="relative">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3">
                     <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -33,6 +33,10 @@
     {{-- Daftar Agenda untuk Guru --}}
     <div class="space-y-4">
         @forelse ($agendas as $agenda)
+            @php
+                // Cek apakah guru yang sedang login sudah mengisi presensi untuk agenda ini
+                $userPresensi = $agenda->presensi->firstWhere('user_id', Auth::id());
+            @endphp
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="p-6">
                     <div class="flex justify-between items-start">
@@ -41,6 +45,23 @@
                             <p class="text-sm text-gray-500 mt-1">
                                 {{ \Carbon\Carbon::parse($agenda->meeting_date)->translatedFormat('l, d F Y') }} &middot; {{ \Carbon\Carbon::parse($agenda->meeting_time)->format('H:i') }} WIB
                             </p>
+                        </div>
+                        {{-- Tombol Aksi --}}
+                        <div class="flex-shrink-0 ml-4">
+                            @if ($userPresensi)
+                                {{-- Jika sudah mengisi, tampilkan status --}}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize
+                                    {{ $userPresensi->status == 'hadir' ? 'bg-green-100 text-green-800' : '' }}
+                                    {{ $userPresensi->status == 'tidak_hadir' ? 'bg-red-100 text-red-800' : '' }}
+                                    {{ $userPresensi->status == 'izin' ? 'bg-yellow-100 text-yellow-800' : '' }}">
+                                    {{ str_replace('_', ' ', $userPresensi->status) }}
+                                </span>
+                            @else
+                                {{-- Jika belum, tampilkan tombol untuk mengisi presensi --}}
+                                <a href="{{ route('presensi.create', $agenda->id) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700">
+                                    Isi Presensi
+                                </a>
+                            @endif
                         </div>
                     </div>
                     <p class="mt-4 text-gray-600">
@@ -56,7 +77,7 @@
     </div>
     {{-- Pagination --}}
     <div class="mt-6">
-        {{ $agendas->appends(request()->query())->links() }}
+        {{ $agendas->links() }}
     </div>
 </div>
 @endsection
