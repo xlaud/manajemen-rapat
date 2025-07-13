@@ -9,10 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    {{-- CSS untuk DataTables --}}
     <link rel="stylesheet" href="https://cdn.datatables.net/2.0.10/css/dataTables.tailwindcss.css">
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 
     <style>
         body {
@@ -85,7 +85,8 @@
     </nav>
 
     <main class="container mx-auto p-6">
-        @include('components.message')
+        <x-message type="success" />
+        <x-message type="error" />
         @yield('content')
     </main>
 

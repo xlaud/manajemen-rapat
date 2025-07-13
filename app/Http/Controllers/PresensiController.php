@@ -10,13 +10,21 @@ use Illuminate\Support\Facades\Auth;
 class PresensiController extends Controller
 {
     /**
-     * Menampilkan halaman rekapitulasi presensi untuk Admin.
+     * Menampilkan halaman rekapitulasi presensi untuk Admin dengan pencarian dan pagination.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua agenda, dan sertakan relasi 'presensi' beserta data 'user' 
-        $agendas = Agenda::with('presensi.user')->latest('meeting_date')->get();
-        
+        $search = $request->query('search');
+
+        $agendas = Agenda::query()
+            ->with('presensi.user') // Eager load untuk efisiensi
+            ->when($search, function ($query, $search) {
+                // Cari berdasarkan judul agenda
+                return $query->where('title', 'like', "%{$search}%");
+            })
+            ->latest('meeting_date')
+            ->paginate(10);
+
         return view('presensi.index', compact('agendas'));
     }
 
@@ -27,8 +35,8 @@ class PresensiController extends Controller
     {
         // Cek apakah guru yang sedang login sudah pernah mengisi presensi
         $existingPresensi = Presensi::where('agenda_id', $agenda->id)
-                                    ->where('user_id', Auth::id())
-                                    ->first();
+                                      ->where('user_id', Auth::id())
+                                      ->first();
 
         return view('presensi.create', compact('agenda', 'existingPresensi'));
     }
@@ -45,8 +53,8 @@ class PresensiController extends Controller
 
         // Cek lagi untuk mencegah pengisian ganda
         $alreadyExists = Presensi::where('agenda_id', $agenda->id)
-                                 ->where('user_id', Auth::id())
-                                 ->exists();
+                                   ->where('user_id', Auth::id())
+                                   ->exists();
 
         if ($alreadyExists) {
             return redirect()->route('agendas.guru')->with('error', 'Anda sudah mengisi presensi untuk agenda ini.');

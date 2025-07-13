@@ -9,26 +9,40 @@ class Dokumentasi extends Model
 {
     use HasFactory;
 
-    protected $table = 'dokumentasi'; // Pastikan nama tabel benar, karena bukan 'dokumentasis'
+    /**
+     * Nama tabel yang terhubung dengan model.
+     *
+     * @var string
+     */
+    protected $table = 'dokumentasi';
 
-    // Kolom-kolom yang dapat diisi secara massal
+    /**
+     * Atribut yang dapat diisi secara massal.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'title',
-        'description',
-        'file_path',   // Path ke file yang diunggah
-        'agenda_id',   // Foreign key ke tabel agendas (opsional, bisa null)
-        'user_id',     // Foreign key ke tabel users (siapa yang mengunggah)
+        'agenda_id',
+        'image_path',
+        'caption',
     ];
 
-    // Definisi relasi: Satu dokumentasi mungkin terkait dengan satu Agenda
+    /**
+     * Atribut yang harus di-cast ke tipe data tertentu.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        // Secara otomatis mengubah kolom image_path dari JSON (di database) 
+        // menjadi array (di PHP) saat diakses, dan sebaliknya saat menyimpan.
+        'image_path' => 'array',
+    ];
+
+    /**
+     * Mendapatkan agenda yang terkait dengan dokumentasi.
+     */
     public function agenda()
     {
         return $this->belongsTo(Agenda::class);
-    }
-
-    // Definisi relasi: Satu dokumentasi diunggah oleh satu User
-    public function user()
-    {
-        return $this->belongsTo(User::class);
     }
 }

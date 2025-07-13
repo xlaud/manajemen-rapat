@@ -1,32 +1,72 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Notula Rapat</h2>
+<div class="space-y-6">
+    {{-- Header Halaman --}}
+    <div class="sm:flex sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Daftar Notula Rapat</h1>
+            <p class="mt-1 text-sm text-gray-500">Lihat semua notula rapat yang telah dipublikasikan.</p>
+        </div>
+    </div>
 
-    <div class="overflow-x-auto">
-        @if($notulas->count() > 0)
-            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                <thead class="bg-gray-100">
+    {{-- Pencarian Notula --}}
+    <div class="mt-4">
+        <form action="{{ route('notulas.guru.index') }}" method="GET" class="w-full">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </span>
+                <input 
+                    type="search" 
+                    name="search" 
+                    placeholder="Cari notula atau nama agenda..." 
+                    class="block w-full py-2 pl-10 pr-3 text-gray-900 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value="{{ request('search') }}"
+                >
+            </div>
+        </form>
+    </div>
+
+    {{-- Tabel Data Notula --}}
+    <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Notula</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agenda Terkait</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Isi Notula</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @forelse ($notulas as $notula)
                     <tr>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Judul</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Agenda Terkait</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider rounded-tr-lg">Isi Notula</th>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ $notula->title }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $notula->agenda->title ?? 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ Str::limit($notula->description, 150) }}
+                        </td>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($notulas as $notula)
-                        <tr>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $notula->title }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $notula->agenda->title ?? 'N/A' }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $notula->description }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="text-gray-500 text-center py-8">Belum ada notula rapat yang tersedia.</p>
-        @endif
+                @empty
+                    <tr>
+                        <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">
+                            Tidak ada data notula yang ditemukan.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-4">
+        {{ $notulas->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection

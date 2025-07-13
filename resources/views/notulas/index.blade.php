@@ -1,54 +1,92 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Notula Rapat</h2>
+<div class="space-y-6">
+    {{-- Header Halaman --}}
+    <div class="sm:flex sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Manajemen Notula</h1>
+            <p class="mt-1 text-sm text-gray-500">Kelola semua notula rapat yang telah dibuat.</p>
+        </div>
+        
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ route('notulas.create') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Tambah Notula Baru
+            </a>
+        </div>
+    </div>
 
-    <a href="{{ route('notulas.create') }}" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-        <span>Tambah Notula Baru</span>
-    </a>
+    {{-- 1. FORM PENCARIAN DITAMBAHKAN DI SINI --}}
+    <div class="mt-4">
+        <form action="{{ route('notulas.index') }}" method="GET" class="w-full">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </span>
+                <input 
+                    type="search" 
+                    name="search" 
+                    placeholder="Cari notula atau nama agenda..." 
+                    class="block w-full py-2 pl-10 pr-3 text-gray-900 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value="{{ request('search') }}"
+                >
+            </div>
+        </form>
+    </div>
 
-    <div class="overflow-x-auto">
-        @if($notulas->count() > 0)
-            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                <thead class="bg-gray-100">
+    {{-- Tabel Data Notula --}}
+    <div class="overflow-x-auto bg-white rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Judul Notula</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agenda Terkait</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dibuat Oleh</th>
+                    <th scope="col" class="relative px-6 py-3">
+                        <span class="sr-only">Aksi</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @forelse ($notulas as $notula)
                     <tr>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Judul</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Agenda Terkait</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Deskripsi</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider rounded-tr-lg">Aksi</th>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ $notula->title }}</div>
+                            <div class="text-sm text-gray-500">{{ Str::limit($notula->description, 50) }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $notula->agenda->title ?? 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ $notula->user->name ?? 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex items-center justify-end space-x-4">
+                                <a href="{{ route('notulas.edit', $notula->id) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <form action="{{ route('notulas.destroy', $notula->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus notula ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-600 hover:text-red-900">Hapus</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($notulas as $notula)
-                        <tr>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $notula->title }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $notula->agenda->title ?? 'N/A' }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ \Illuminate\Support\Str::limit($notula->description, 100) }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('notulas.edit', $notula->id) }}" class="flex items-center space-x-1 text-blue-600 hover:text-blue-800 font-semibold transition duration-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-                                        <span>Edit</span>
-                                    </a>
-                                    <form action="{{ route('notulas.destroy', $notula->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus notula ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="flex items-center space-x-1 text-red-600 hover:text-red-800 font-semibold transition duration-200">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                            <span>Hapus</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="text-gray-500 text-center py-8">Belum ada data notula.</p>
-        @endif
+                @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-sm text-gray-500">
+                            Tidak ada data notula yang ditemukan.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- 2. LINK PAGINATION DITAMBAHKAN DI SINI --}}
+    <div class="mt-4">
+        {{ $notulas->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection

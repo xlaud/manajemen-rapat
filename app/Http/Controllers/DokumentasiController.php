@@ -2,150 +2,96 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Dokumentasi; // Impor model Dokumentasi
-use App\Models\Agenda;     // Impor model Agenda untuk dropdown
+use App\Models\Dokumentasi;
+use App\Models\Agenda;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;     // Untuk mendapatkan user yang login
-use Illuminate\Support\Facades\Storage; // Untuk mengelola file di storage
+use Illuminate\Support\Facades\Storage;
 
 class DokumentasiController extends Controller
 {
     /**
-     * Menampilkan daftar semua dokumentasi (untuk Admin).
-     *
-     * @return \Illuminate\View\View
+     * Menampilkan daftar semua dokumentasi dengan fitur pencarian dan pagination.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $dokumentasi = Dokumentasi::all(); // Mengambil semua data dokumentasi
-        return view('dokumentasi.index', compact('dokumentasi'));
+        // Ambil kata kunci pencarian dari URL
+        $search = $request->query('search');
+
+        // Query dasar untuk dokumentasi
+        $dokumentasis = Dokumentasi::query()
+            ->with('agenda') // Eager load relasi agenda untuk efisiensi
+            ->when($search, function ($query, $search) {
+                // Cari berdasarkan caption atau judul agenda terkait
+                return $query->where('caption', 'like', "%{$search}%")
+                             ->orWhereHas('agenda', function ($q) use ($search) {
+                                 $q->where('title', 'like', "%{$search}%");
+                             });
+            })
+            ->latest()
+            ->paginate(9); // Paginate 9, cocok untuk layout galeri
+
+        return view('dokumentasi.index', compact('dokumentasis'));
     }
 
     /**
      * Menampilkan form untuk menambahkan dokumentasi baru.
-     *
-     * @return \Illuminate\View\View
      */
     public function create()
     {
-        $agendas = Agenda::all(); // Mengambil semua agenda untuk dropdown
+        $agendas = Agenda::latest()->get();
         return view('dokumentasi.create', compact('agendas'));
     }
 
     /**
-     * Menyimpan dokumentasi baru ke database dan mengunggah file.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
+     * Menyimpan dokumentasi baru ke database.
      */
     public function store(Request $request)
     {
-        // Validasi input, termasuk validasi file
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:5120', // Tipe dan ukuran file
-            'agenda_id' => 'nullable|exists:agendas,id', // agenda_id opsional
+            'agenda_id' => 'required|exists:agendas,id',
+            'images' => 'required|array', // Validasi bahwa 'images' adalah array
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi setiap file dalam array
+            'caption' => 'nullable|string|max:255',
         ]);
 
-        $filePath = null; // Inisialisasi path file
-        if ($request->hasFile('file')) {
-            // Menyimpan file ke direktori 'storage/app/public/dokumentasi'
-            // dan mendapatkan path relatifnya
-            $filePath = $request->file('file')->store('public/dokumentasi');
-        }
-
-        // Membuat entri baru di tabel dokumentasi
-        Dokumentasi::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'file_path' => $filePath, // Simpan path file
-            'agenda_id' => $request->agenda_id,
-            'user_id' => Auth::id(), // ID user yang mengunggah
-        ]);
-
-        return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil ditambahkan!');
-    }
-
-    /**
-     * Menampilkan form untuk mengedit dokumentasi yang sudah ada.
-     *
-     * @param  \App\Models\Dokumentasi  $dokumentasi
-     * @return \Illuminate\View\View
-     */
-    public function edit(Dokumentasi $dokumentasi)
-    {
-        $agendas = Agenda::all();
-        return view('dokumentasi.edit', compact('dokumentasi', 'agendas'));
-    }
-
-    /**
-     * Memperbarui dokumentasi yang sudah ada, termasuk mengganti file jika ada.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Dokumentasi  $dokumentasi
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function update(Request $request, Dokumentasi $dokumentasi)
-    {
-        // Validasi input
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'file' => 'nullable|file|mimes:pdf,doc,docx,ppt,pptx,jpg,jpeg,png|max:5120',
-            'agenda_id' => 'nullable|exists:agendas,id',
-        ]);
-
-        $filePath = $dokumentasi->file_path; // Ambil path file lama
-        if ($request->hasFile('file')) {
-            // Jika ada file baru diunggah, hapus file lama (jika ada)
-            if ($filePath && Storage::exists($filePath)) {
-                Storage::delete($filePath);
+        $imagePaths = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                // Simpan setiap gambar dan kumpulkan path-nya
+                $path = $image->store('dokumentasi', 'public');
+                $imagePaths[] = $path;
             }
-            // Simpan file baru
-            $filePath = $request->file('file')->store('public/dokumentasi');
         }
 
-        // Perbarui entri di database
-        $dokumentasi->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'file_path' => $filePath, // Update dengan path file baru atau tetap yang lama
+        Dokumentasi::create([
             'agenda_id' => $request->agenda_id,
+            // Simpan array path gambar sebagai string JSON
+            'image_path' => json_encode($imagePaths), 
+            'caption' => $request->caption,
         ]);
 
-        return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil diperbarui!');
+        return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil ditambahkan.');
     }
 
     /**
-     * Menghapus dokumentasi dari database dan juga file terkait.
-     *
-     * @param  \App\Models\Dokumentasi  $dokumentasi
-     * @return \Illuminate\Http\RedirectResponse
+     * Menghapus dokumentasi dari database.
      */
     public function destroy(Dokumentasi $dokumentasi)
     {
-        // Hapus file dari storage jika ada
-        if ($dokumentasi->file_path && Storage::exists($dokumentasi->file_path)) {
-            Storage::delete($dokumentasi->file_path);
-        }
-        // Hapus entri dari database
-        $dokumentasi->delete();
-        return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil dihapus!');
-    }
+        // Decode string JSON menjadi array path gambar
+        $imagePaths = json_decode($dokumentasi->image_path, true);
 
-    /**
-     * Mendownload file dokumentasi.
-     *
-     * @param  \App\Models\Dokumentasi  $dokumentasi
-     * @return \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\RedirectResponse
-     */
-    public function download(Dokumentasi $dokumentasi)
-    {
-        // Pastikan file_path ada dan file fisik ada di storage
-        if ($dokumentasi->file_path && Storage::exists($dokumentasi->file_path)) {
-            return Storage::download($dokumentasi->file_path);
+        // Pastikan hasil decode adalah array sebelum di-loop
+        if (is_array($imagePaths)) {
+            foreach ($imagePaths as $path) {
+                if ($path && Storage::disk('public')->exists($path)) {
+                    Storage::disk('public')->delete($path);
+                }
+            }
         }
-        return redirect()->back()->with('error', 'File tidak ditemukan atau sudah dihapus.');
+        
+        $dokumentasi->delete();
+        
+        return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil dihapus.');
     }
 }

@@ -1,62 +1,80 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Dokumentasi</h2>
+<div class="space-y-6">
+    {{-- Header Halaman --}}
+    <div class="sm:flex sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Dokumentasi Rapat</h1>
+            <p class="mt-1 text-sm text-gray-500">Galeri foto dari berbagai kegiatan rapat.</p>
+        </div>
+        
+        <div class="mt-4 sm:mt-0">
+            <a href="{{ route('dokumentasi.create') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up mr-2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 11V3"/><path d="m18 8-6-6-6 6"/></svg>
+                <span>Unggah Dokumentasi</span>
+            </a>
+        </div>
+    </div>
 
-    <a href="{{ route('dokumentasi.create') }}" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out mb-6">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-up"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 11V3"/><path d="m18 8-6-6-6 6"/></svg>
-        <span>Unggah Dokumentasi Baru</span>
-    </a>
+    {{-- Form Pencarian --}}
+    <div class="mt-4">
+        <form action="{{ route('dokumentasi.index') }}" method="GET" class="w-full">
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </span>
+                <input 
+                    type="search" 
+                    name="search" 
+                    placeholder="Cari berdasarkan caption atau nama agenda..." 
+                    class="block w-full py-2 pl-10 pr-3 text-gray-900 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value="{{ request('search') }}"
+                >
+            </div>
+        </form>
+    </div>
 
-    <div class="overflow-x-auto">
-        @if($dokumentasi->count() > 0)
-            <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider rounded-tl-lg">Judul</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Deskripsi</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">File</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider">Agenda Terkait</th>
-                        <th class="py-3 px-6 text-left text-sm font-medium text-gray-600 uppercase tracking-wider rounded-tr-lg">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($dokumentasi as $doc)
-                        <tr>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $doc->title }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ \Illuminate\Support\Str::limit($doc->description, 100) }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">
-                                @if($doc->file_path)
-                                    <a href="{{ route('dokumentasi.download', $doc->id) }}" class="text-blue-600 hover:underline">Download File</a>
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td class="py-4 px-6 text-sm text-gray-800">{{ $doc->agenda->title ?? '-' }}</td>
-                            <td class="py-4 px-6 text-sm text-gray-800">
-                                <div class="flex space-x-2">
-                                    <a href="{{ route('dokumentasi.edit', $doc->id) }}" class="flex items-center space-x-1 text-blue-600 hover:text-blue-800 font-semibold transition duration-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-                                        <span>Edit</span>
-                                    </a>
-                                    <form action="{{ route('dokumentasi.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus dokumentasi ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="flex items-center space-x-1 text-red-600 hover:text-red-800 font-semibold transition duration-200">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                                            <span>Hapus</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @else
-            <p class="text-gray-500 text-center py-8">Belum ada dokumentasi.</p>
-        @endif
+    {{-- Galeri Dokumentasi --}}
+    {{-- Pastikan variabelnya 'dokumentasis' (plural) sesuai dengan controller --}}
+    @if($dokumentasis->count() > 0)
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            @foreach($dokumentasis as $dokumentasi)
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden group relative transition-all duration-300 hover:shadow-2xl">
+                    {{-- Gambar Dokumentasi --}}
+                    {{-- Diasumsikan 'file_path' adalah path gambar. Jika bukan, sesuaikan dengan nama kolom Anda --}}
+                    <img src="{{ asset('storage/' . $dokumentasi->image_path) }}" alt="{{ $dokumentasi->caption ?? 'Dokumentasi Rapat' }}" class="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-300">
+                    
+                    {{-- Overlay untuk Aksi Hapus --}}
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <form action="{{ route('dokumentasi.destroy', $dokumentasi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus dokumentasi ini?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            </button>
+                        </form>
+                    </div>
+
+                    {{-- Informasi di Bawah Gambar --}}
+                    <div class="p-4">
+                        <p class="font-semibold text-gray-800 truncate" title="{{ $dokumentasi->caption }}">{{ $dokumentasi->caption ?? 'Tanpa caption' }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Agenda: {{ $dokumentasi->agenda->title ?? 'N/A' }}</p>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="col-span-1 sm:col-span-2 md:col-span-3 bg-white p-8 rounded-2xl shadow-lg text-center">
+            <p class="text-gray-500">Tidak ada dokumentasi yang cocok dengan pencarian Anda.</p>
+        </div>
+    @endif
+
+    {{-- Link Pagination --}}
+    <div class="mt-6">
+        {{ $dokumentasis->appends(request()->query())->links() }}
     </div>
 </div>
 @endsection
