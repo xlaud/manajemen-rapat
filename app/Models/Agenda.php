@@ -31,9 +31,9 @@ class Agenda extends Model
     }
 
     // Definisi relasi: Satu agenda memiliki banyak Notula
-    public function notulas()
+    public function notula()
     {
-        return $this->hasMany(Notula::class);
+        return $this->hasOne(Notula::class, 'agenda_id');
     }
 
     // Definisi relasi: Satu agenda memiliki banyak Presensi

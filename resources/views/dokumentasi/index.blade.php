@@ -38,32 +38,23 @@
     </div>
 
     {{-- Galeri Dokumentasi --}}
-    {{-- Pastikan variabelnya 'dokumentasis' (plural) sesuai dengan controller --}}
     @if($dokumentasis->count() > 0)
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             @foreach($dokumentasis as $dokumentasi)
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden group relative transition-all duration-300 hover:shadow-2xl">
-                    {{-- Gambar Dokumentasi --}}
-                    {{-- Diasumsikan 'file_path' adalah path gambar. Jika bukan, sesuaikan dengan nama kolom Anda --}}
-                    <img src="{{ asset('storage/' . $dokumentasi->image_path) }}" alt="{{ $dokumentasi->caption ?? 'Dokumentasi Rapat' }}" class="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-300">
+                <a href="{{ route('dokumentasi.show', $dokumentasi->id) }}" class="bg-white rounded-lg shadow-lg overflow-hidden group relative transition-all duration-300 hover:shadow-2xl">
+                    @php
+                        // Decode JSON dan ambil gambar pertama
+                        $images = json_decode($dokumentasi->image_path, true);
+                        $thumbnail = $images[0] ?? 'default-image.jpg'; // Sediakan gambar default jika tidak ada gambar
+                    @endphp
+                    <img src="{{ asset('storage/' . $thumbnail) }}" alt="{{ $dokumentasi->caption ?? 'Dokumentasi Rapat' }}" class="w-full h-56 object-cover transform group-hover:scale-105 transition-transform duration-300">
                     
-                    {{-- Overlay untuk Aksi Hapus --}}
-                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <form action="{{ route('dokumentasi.destroy', $dokumentasi->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus dokumentasi ini?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                            </button>
-                        </form>
-                    </div>
-
                     {{-- Informasi di Bawah Gambar --}}
                     <div class="p-4">
                         <p class="font-semibold text-gray-800 truncate" title="{{ $dokumentasi->caption }}">{{ $dokumentasi->caption ?? 'Tanpa caption' }}</p>
                         <p class="text-sm text-gray-500 mt-1">Agenda: {{ $dokumentasi->agenda->title ?? 'N/A' }}</p>
                     </div>
-                </div>
+                </a>
             @endforeach
         </div>
     @else

@@ -6,6 +6,8 @@ use App\Models\Dokumentasi;
 use App\Models\Agenda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use ZipArchive;
 
 class DokumentasiController extends Controller
 {
@@ -14,21 +16,17 @@ class DokumentasiController extends Controller
      */
     public function index(Request $request)
     {
-        // Ambil kata kunci pencarian dari URL
         $search = $request->query('search');
-
-        // Query dasar untuk dokumentasi
         $dokumentasis = Dokumentasi::query()
-            ->with('agenda') // Eager load relasi agenda untuk efisiensi
+            ->with('agenda')
             ->when($search, function ($query, $search) {
-                // Cari berdasarkan caption atau judul agenda terkait
                 return $query->where('caption', 'like', "%{$search}%")
                              ->orWhereHas('agenda', function ($q) use ($search) {
                                  $q->where('title', 'like', "%{$search}%");
                              });
             })
             ->latest()
-            ->paginate(9); // Paginate 9, cocok untuk layout galeri
+            ->paginate(9);
 
         return view('dokumentasi.index', compact('dokumentasis'));
     }
@@ -49,15 +47,14 @@ class DokumentasiController extends Controller
     {
         $request->validate([
             'agenda_id' => 'required|exists:agendas,id',
-            'images' => 'required|array', // Validasi bahwa 'images' adalah array
-            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi setiap file dalam array
+            'images' => 'required|array',
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'caption' => 'nullable|string|max:255',
         ]);
 
         $imagePaths = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                // Simpan setiap gambar dan kumpulkan path-nya
                 $path = $image->store('dokumentasi', 'public');
                 $imagePaths[] = $path;
             }
@@ -65,7 +62,6 @@ class DokumentasiController extends Controller
 
         Dokumentasi::create([
             'agenda_id' => $request->agenda_id,
-            // Simpan array path gambar sebagai string JSON
             'image_path' => json_encode($imagePaths), 
             'caption' => $request->caption,
         ]);
@@ -74,14 +70,103 @@ class DokumentasiController extends Controller
     }
 
     /**
+     * Menampilkan detail dokumentasi.
+     */
+    public function show(Dokumentasi $dokumentasi)
+    {
+        return view('dokumentasi.show', compact('dokumentasi'));
+    }
+
+    /**
+     * Menampilkan form untuk mengedit dokumentasi.
+     */
+    public function edit(Dokumentasi $dokumentasi)
+    {
+        $agendas = Agenda::latest()->get();
+        return view('dokumentasi.edit', compact('dokumentasi', 'agendas'));
+    }
+
+    /**
+     * Memperbarui data dokumentasi di database.
+     */
+    public function update(Request $request, Dokumentasi $dokumentasi)
+    {
+        $request->validate([
+            'agenda_id' => 'required|exists:agendas,id',
+            'caption' => 'nullable|string|max:255',
+            'images' => 'nullable|array', // Gambar tidak wajib diisi saat update
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $data = $request->only(['agenda_id', 'caption']);
+
+        if ($request->hasFile('images')) {
+            $oldImages = json_decode($dokumentasi->image_path, true);
+            if (is_array($oldImages)) {
+                foreach ($oldImages as $oldImage) {
+                    Storage::disk('public')->delete($oldImage);
+                }
+            }
+
+            $imagePaths = [];
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('dokumentasi', 'public');
+                $imagePaths[] = $path;
+            }
+            $data['image_path'] = json_encode($imagePaths);
+        }
+
+        $dokumentasi->update($data);
+
+        return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil diperbarui.');
+    }
+    
+    // ## [METHOD YANG HILANG ADA DI SINI] ##
+    /**
+     * Mengunduh semua gambar dokumentasi sebagai file ZIP.
+     */
+    public function download(Dokumentasi $dokumentasi)
+    {
+        $images = json_decode($dokumentasi->image_path, true);
+
+        if (empty($images)) {
+            return redirect()->back()->with('error', 'Tidak ada gambar untuk diunduh.');
+        }
+
+        // Buat nama file zip yang unik
+        $zipFileName = 'dokumentasi-' . Str::slug($dokumentasi->agenda->title) . '-' . $dokumentasi->id . '.zip';
+        $zipPath = storage_path('app/temp/' . $zipFileName);
+
+        // Pastikan direktori temp ada
+        if (!file_exists(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+
+        $zip = new \ZipArchive;
+
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            foreach ($images as $imagePath) {
+                if (Storage::disk('public')->exists($imagePath)) {
+                    $absolutePath = Storage::disk('public')->path($imagePath);
+                    $zip->addFile($absolutePath, basename($imagePath));
+                }
+            }
+            $zip->close();
+        } else {
+            return redirect()->back()->with('error', 'Gagal membuat file zip.');
+        }
+
+        // Kembalikan file zip sebagai unduhan dan hapus setelah dikirim
+        return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    /**
      * Menghapus dokumentasi dari database.
      */
     public function destroy(Dokumentasi $dokumentasi)
     {
-        // Decode string JSON menjadi array path gambar
         $imagePaths = json_decode($dokumentasi->image_path, true);
 
-        // Pastikan hasil decode adalah array sebelum di-loop
         if (is_array($imagePaths)) {
             foreach ($imagePaths as $path) {
                 if ($path && Storage::disk('public')->exists($path)) {
