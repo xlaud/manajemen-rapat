@@ -7,6 +7,9 @@ use App\Models\Agenda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpWord\PhpWord;
+use PhpOffice\PhpWord\IOFactory; 
+use PhpOffice\PhpWord\Shared\Html;
 
 class NotulaController extends Controller
 {
