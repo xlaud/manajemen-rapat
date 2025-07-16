@@ -1,105 +1,177 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Manajemen Rapat Guru</title>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.datatables.net/2.0.10/css/dataTables.tailwindcss.css">
-    
+
+    {{-- AlpineJS untuk interaktivitas dropdown --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #F9FAFB; /* bg-gray-50 */
-        }
-        .nav-link {
-            position: relative;
-            transition: color 0.3s ease-in-out;
-            padding-bottom: 8px;
-        }
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #FFFFFF;
-            transition: width 0.3s ease-in-out;
-        }
-        .nav-link.active {
-            color: #FFFFFF;
-        }
-        .nav-link:hover {
-            color: #FFFFFF;
-        }
-        .nav-link.active::after,
-        .nav-link:hover::after {
-            width: 60%;
+            background-color: #F9FAFB;
         }
     </style>
 </head>
+
 <body class="antialiased">
     <div id="app" class="flex flex-col min-h-screen">
-        
-        {{-- Header/Navbar --}}
-        <header class="bg-green-700 sticky top-0 z-50 shadow-lg">
+
+        {{-- Header/Navbar dengan state untuk menu mobile & user --}}
+        <header x-data="{ userMenuOpen: false, mobileMenuOpen: false }"
+            class="bg-green-700/80 backdrop-blur-lg sticky top-0 z-50 shadow-lg border-b border-green-600/30">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-20">
-                    
-                    {{-- Logo dan Navigasi Utama --}}
+
+                    {{-- [KIRI] Logo & Navigasi Desktop --}}
                     <div class="flex items-center space-x-8">
                         {{-- Logo --}}
                         <a href="{{ route('dashboard') }}" class="flex-shrink-0 flex items-center space-x-3">
-                            <img class="h-10 w-auto" src="https://placehold.co/40x40/FFFFFF/15803D?text=SMR" alt="Logo">
+                            <div class="bg-green-100 p-2 rounded-lg">
+                                <svg class="h-6 w-6 text-green-800" xmlns="http://www.w3.org/2000/svg" width="24"
+                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2z"></path>
+                                    <path d="M18 9h2a2 2 0 0 1 2 2v10l-4-4h-6a2 2 0 0 1-2-2v-2"></path>
+                                </svg>
+                            </div>
                             <span class="text-xl font-bold text-white hidden sm:inline">Manajemen Rapat</span>
                         </a>
 
-                        {{-- Navigasi Links --}}
-                        <nav class="hidden md:flex items-center space-x-6">
-                            <a href="{{ route('dashboard') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('dashboard') ? 'active font-semibold' : '' }}">
-                                Dashboard
-                            </a>
-                            @if(Auth::user()->role === 'admin')
-                                <a href="{{ route('users.index') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('users.*') ? 'active font-semibold' : '' }}">Guru</a>
-                                <a href="{{ route('agendas.index') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('agendas.*') ? 'active font-semibold' : '' }}">Agenda</a>
-                                <a href="{{ route('presensi.index') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('presensi.index') ? 'active font-semibold' : '' }}">Presensi</a>
-                                <a href="{{ route('notulas.index') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('notulas.*') ? 'active font-semibold' : '' }}">Notula</a>
-                                <a href="{{ route('dokumentasi.index') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('dokumentasi.*') ? 'active font-semibold' : '' }}">Dokumentasi</a>
+                        {{-- Navigasi Links Desktop --}}
+                        <nav class="hidden md:flex items-center space-x-2">
+                            @php
+                                $navLinkClasses =
+                                    'px-3 py-2 rounded-md text-sm font-medium text-green-200 hover:bg-green-600 hover:text-white transition-colors duration-200';
+                                $activeLinkClasses = 'bg-green-600 text-white font-semibold';
+                            @endphp
+
+                            <a href="{{ route('dashboard') }}"
+                                class="{{ $navLinkClasses }} {{ request()->routeIs('dashboard') ? $activeLinkClasses : '' }}">Dashboard</a>
+                            @if (Auth::user()->role === 'admin')
+                                <a href="{{ route('users.index') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('users.*') ? $activeLinkClasses : '' }}">Guru</a>
+                                <a href="{{ route('agendas.index') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('agendas.*') ? $activeLinkClasses : '' }}">Agenda</a>
+                                <a href="{{ route('presensi.index') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('presensi.*') ? $activeLinkClasses : '' }}">Presensi</a>
+                                <a href="{{ route('notulas.index') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('notulas.*') ? $activeLinkClasses : '' }}">Notula</a>
+                                <a href="{{ route('dokumentasi.index') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('dokumentasi.*') ? $activeLinkClasses : '' }}">Dokumentasi</a>
                             @elseif(Auth::user()->role === 'guru')
-                                <a href="{{ route('agendas.guru') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('agendas.guru') ? 'active font-semibold' : '' }}">Lihat Agenda</a>
-                                <a href="{{ route('notulas.guru') }}" class="nav-link text-sm font-medium text-green-200 {{ request()->routeIs('notulas.guru') ? 'active font-semibold' : '' }}">Lihat Notula</a>
+                                <a href="{{ route('agendas.guru') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('agendas.guru') ? $activeLinkClasses : '' }}">Lihat
+                                    Agenda</a>
+                                <a href="{{ route('notulas.guru') }}"
+                                    class="{{ $navLinkClasses }} {{ request()->routeIs('notulas.guru') ? $activeLinkClasses : '' }}">Lihat
+                                    Notula</a>
                             @endif
                         </nav>
                     </div>
-                    
-                    {{-- Aksi Pengguna (Kanan) --}}
-                    <div class="flex items-center space-x-6">
-                        {{-- Informasi Peran Pengguna --}}
-                        <div class="flex items-center space-x-2">
-                            <span class="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse"></span>
-                            <span class="text-sm font-semibold text-white capitalize">
-                                {{ Auth::user()->role }}
-                            </span>
+
+                    {{-- [KANAN] Menu Dropdown User & Tombol Hamburger --}}
+                    <div class="flex items-center">
+                        {{-- Menu Dropdown Pengguna --}}
+                        <div @click.away="userMenuOpen = false" class="relative">
+                            <button @click="userMenuOpen = !userMenuOpen"
+                                class="flex items-center space-x-2 text-white bg-green-600/50 hover:bg-green-600 px-3 py-2 rounded-lg transition-colors">
+                                <span class="text-sm font-semibold capitalize">{{ Auth::user()->role }}</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round" class="transition-transform"
+                                    :class="{ 'rotate-180': userMenuOpen }">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </button>
+                            <div x-show="userMenuOpen" x-transition
+                                class="absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                style="display: none;">
+                                <div class="py-1">
+                                    <div class="px-4 py-2 border-b border-gray-100">
+                                        <p class="text-sm text-gray-800 font-semibold">Halo, {{ Auth::user()->name }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
+                                    </div>
+                                    <form action="{{ route('logout') }}" method="POST" class="w-full"> @csrf
+                                        <button type="submit"
+                                            class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:font-semibold flex items-center space-x-2 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                                <polyline points="16 17 21 12 16 7" />
+                                                <line x1="21" x2="9" y1="12" y2="12" />
+                                            </svg>
+                                            <span>Log Out</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
 
-                        {{-- Tombol Logout --}}
-                        <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="text-sm font-medium text-green-200 hover:text-white transition-colors flex items-center space-x-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                                <span>Log Out</span>
+                        {{-- Tombol Hamburger (Hanya Tampil di Mobile) --}}
+                        <div class="ml-2 md:hidden">
+                            <button @click="mobileMenuOpen = !mobileMenuOpen"
+                                class="inline-flex items-center justify-center p-2 rounded-md text-green-200 hover:text-white hover:bg-green-600 focus:outline-none focus:bg-green-600 transition">
+                                <svg :class="{ 'hidden': mobileMenuOpen, 'block': !mobileMenuOpen }" class="h-6 w-6"
+                                    stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                                <svg :class="{ 'block': mobileMenuOpen, 'hidden': !mobileMenuOpen }" class="h-6 w-6"
+                                    stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
                             </button>
-                        </form>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            {{-- Panel Menu Mobile --}}
+            <div x-show="mobileMenuOpen" x-transition class="md:hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-green-700">
+                    @php
+                        $mobileNavLinkClasses =
+                            'block px-3 py-2 rounded-md text-base font-medium text-green-200 hover:text-white hover:bg-green-600 transition-colors';
+                        $mobileActiveLinkClasses = 'bg-green-800 text-white';
+                    @endphp
+
+                    <a href="{{ route('dashboard') }}"
+                        class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('dashboard') ? $mobileActiveLinkClasses : '' }}">Dashboard</a>
+                    @if (Auth::user()->role === 'admin')
+                        <a href="{{ route('users.index') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('users.*') ? $mobileActiveLinkClasses : '' }}">Guru</a>
+                        <a href="{{ route('agendas.index') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('agendas.*') ? $mobileActiveLinkClasses : '' }}">Agenda</a>
+                        <a href="{{ route('presensi.index') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('presensi.*') ? $mobileActiveLinkClasses : '' }}">Presensi</a>
+                        <a href="{{ route('notulas.index') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('notulas.*') ? $mobileActiveLinkClasses : '' }}">Notula</a>
+                        <a href="{{ route('dokumentasi.index') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('dokumentasi.*') ? $mobileActiveLinkClasses : '' }}">Dokumentasi</a>
+                    @elseif(Auth::user()->role === 'guru')
+                        <a href="{{ route('agendas.guru') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('agendas.guru') ? $mobileActiveLinkClasses : '' }}">Lihat
+                            Agenda</a>
+                        <a href="{{ route('notulas.guru') }}"
+                            class="{{ $mobileNavLinkClasses }} {{ request()->routeIs('notulas.guru') ? $mobileActiveLinkClasses : '' }}">Lihat
+                            Notula</a>
+                    @endif
                 </div>
             </div>
         </header>
@@ -124,4 +196,5 @@
     <script src="https://cdn.datatables.net/2.0.10/js/dataTables.tailwindcss.js"></script>
     @stack('scripts')
 </body>
+
 </html>
