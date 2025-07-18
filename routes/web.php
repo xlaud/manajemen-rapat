@@ -25,7 +25,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('agendas', AgendaController::class);
         Route::resource('notulas', NotulaController::class);
-          Route::get('/notulas/{notula}/download', [NotulaController::class, 'downloadWord'])->name('notulas.download');
+        Route::get('/notulas/{notula}/download', [NotulaController::class, 'downloadWord'])->name('notulas.download');
         // Admin hanya bisa melihat rekap presensi
         Route::resource('presensi', PresensiController::class)->only(['index']); 
         Route::resource('dokumentasi', DokumentasiController::class);

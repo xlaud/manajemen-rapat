@@ -13,8 +13,8 @@ class Notula extends Model
     protected $fillable = [
         'title',
         'description',
-        'agenda_id', // Foreign key ke tabel agendas
-        'user_id',   // Foreign key ke tabel users (siapa yang menulis notula)
+        'agenda_id',
+        'user_id',
     ];
 
     // Definisi relasi: Satu notula milik satu Agenda
