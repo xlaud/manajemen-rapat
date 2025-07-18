@@ -7,8 +7,9 @@ use App\Models\Agenda;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str; // <-- Tambahan penting
 use PhpOffice\PhpWord\PhpWord;
-use PhpOffice\PhpWord\IOFactory; 
+use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Shared\Html;
 
 class NotulaController extends Controller
@@ -25,10 +26,10 @@ class NotulaController extends Controller
             ->latest()
             ->when($search, function ($query, $search) {
                 return $query->where('title', 'like', "%{$search}%")
-                             ->orWhere('description', 'like', "%{$search}%")
-                             ->orWhereHas('agenda', function ($q) use ($search) {
-                                 $q->where('title', 'like', "%{$search}%");
-                             });
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('agenda', function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%");
+                    });
             })
             ->paginate(10);
 
@@ -47,10 +48,10 @@ class NotulaController extends Controller
             ->latest()
             ->when($search, function ($query, $search) {
                 return $query->where('title', 'like', "%{$search}%")
-                             ->orWhere('description', 'like', "%{$search}%")
-                             ->orWhereHas('agenda', function ($q) use ($search) {
-                                 $q->where('title', 'like', "%{$search}%");
-                             });
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('agenda', function ($q) use ($search) {
+                        $q->where('title', 'like', "%{$search}%");
+                    });
             })
             ->paginate(10);
 
@@ -103,7 +104,7 @@ class NotulaController extends Controller
         if (Auth::user()->role !== 'admin' && Auth::id() !== $notula->user_id) {
             return redirect()->route('notulas.index')->with('error', 'Anda tidak memiliki izin untuk mengedit notula ini.');
         }
-        
+
         $agendas = Agenda::latest()->get();
         return view('notulas.edit', compact('notula', 'agendas'));
     }
@@ -140,5 +141,46 @@ class NotulaController extends Controller
         $notula->delete();
 
         return redirect()->route('notulas.index')->with('success', 'Notula berhasil dihapus.');
+    }
+
+    /**
+     * Mengunduh notula sebagai file Word (.docx).
+     */
+    public function downloadWord(Notula $notula)
+    {
+        $phpWord = new PhpWord();
+        $section = $phpWord->addSection();
+
+        // Mengambil data relasi
+        $notula->load('agenda');
+        $agenda = $notula->agenda;
+
+        // Menambahkan konten ke dokumen Word
+        $section->addTitle($notula->title, 1);
+        $section->addText("Agenda: " . ($agenda->title ?? 'Tidak ada agenda'), [], ['spaceAfter' => 200]);
+        if ($agenda) {
+            $section->addText("Tanggal Rapat: " . \Carbon\Carbon::parse($agenda->meeting_date)->translatedFormat('l, d F Y'));
+        }
+        $section->addTextBreak(1);
+
+        // Mengonversi HTML ke format Word
+        Html::addHtml($section, $notula->description);
+
+        // Membuat nama file yang aman dan unik
+        $fileName = 'notula-' . Str::slug($notula->title) . '-' . time() . '.docx';
+        $tempPath = storage_path('app/temp/');
+
+        // Memastikan direktori sementara ada
+        if (!file_exists($tempPath)) {
+            mkdir($tempPath, 0755, true);
+        }
+
+        $filePath = $tempPath . $fileName;
+
+        // Menyimpan file dan mengirim sebagai respons unduhan
+        $objWriter = IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($filePath);
+
+        return response()->download($filePath)->deleteFileAfterSend(true);
     }
 }
