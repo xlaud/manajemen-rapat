@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/2.0.10/css/dataTables.tailwindcss.css">
 
     {{-- AlpineJS untuk interaktivitas dropdown --}}
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
@@ -37,19 +37,12 @@
 
                     {{-- [KIRI] Logo & Navigasi Desktop --}}
                     <div class="flex items-center space-x-8">
-                        {{-- Logo --}}
                         <a href="{{ route('dashboard') }}" class="flex-shrink-0 flex items-center space-x-3">
-                            <div class="bg-green-100 p-2 rounded-lg">
-                                <svg class="h-6 w-6 text-green-800" xmlns="http://www.w3.org/2000/svg" width="24"
-                                    height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2z"></path>
-                                    <path d="M18 9h2a2 2 0 0 1 2 2v10l-4-4h-6a2 2 0 0 1-2-2v-2"></path>
-                                </svg>
-                            </div>
-                            <span class="text-xl font-bold text-white hidden sm:inline">Manajemen Rapat</span>
-                        </a>
+                            <img class="h-10 w-auto" src="{{ asset('images/logo-smp.png') }}"
+                                alt="Logo SMPN 3 Mojosongo">
 
+                            <span class="text-xl font-bold text-white hidden sm:inline">SMPN 3 Mojosongo</span>
+                        </a>
                         {{-- Navigasi Links Desktop --}}
                         <nav class="hidden md:flex items-center space-x-2">
                             @php
