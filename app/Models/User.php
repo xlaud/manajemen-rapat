@@ -6,6 +6,10 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Agenda;
+use App\Models\Notula;
+use App\Models\Presensi;
+use App\Models\Dokumentasi;
 
 
 class User extends Authenticatable

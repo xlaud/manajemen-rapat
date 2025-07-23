@@ -8,6 +8,7 @@ use App\Http\Controllers\AgendaController;
 use App\Http\Controllers\NotulaController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\DokumentasiController;
+use App\Http\Controllers\ProfileController;
 
 // Rute Halaman Awal dan Login
 Route::get('/', function () {
@@ -19,6 +20,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->midd
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
     // Rute khusus Admin
     Route::middleware(['role:admin'])->group(function () {

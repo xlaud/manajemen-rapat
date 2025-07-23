@@ -92,7 +92,6 @@
                                     class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
                                 <label for="remember-me" class="ml-2 block text-gray-800">Ingat saya</label>
                             </div>
-                            <a href="#" class="font-medium text-green-600 hover:text-green-500">Lupa password?</a>
                         </div>
 
                         <div>
