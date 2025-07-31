@@ -121,7 +121,6 @@ class DokumentasiController extends Controller
         return redirect()->route('dokumentasi.index')->with('success', 'Dokumentasi berhasil diperbarui.');
     }
     
-    // ## [METHOD YANG HILANG ADA DI SINI] ##
     /**
      * Mengunduh semua gambar dokumentasi sebagai file ZIP.
      */
@@ -133,11 +132,11 @@ class DokumentasiController extends Controller
             return redirect()->back()->with('error', 'Tidak ada gambar untuk diunduh.');
         }
 
-        // Buat nama file zip yang unik
+        // membuat nama file zip yang unik
         $zipFileName = 'dokumentasi-' . Str::slug($dokumentasi->agenda->title) . '-' . $dokumentasi->id . '.zip';
         $zipPath = storage_path('app/temp/' . $zipFileName);
 
-        // Pastikan direktori temp ada
+        // memastikan direktori temp ada
         if (!file_exists(storage_path('app/temp'))) {
             mkdir(storage_path('app/temp'), 0755, true);
         }
@@ -156,7 +155,7 @@ class DokumentasiController extends Controller
             return redirect()->back()->with('error', 'Gagal membuat file zip.');
         }
 
-        // Kembalikan file zip sebagai unduhan dan hapus setelah dikirim
+        // mengembalikan file zip sebagai unduhan dan hapus setelah dikirim
         return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 

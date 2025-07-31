@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agenda;
-use Illuminate\Http\Request; // Import class Request
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AgendaController extends Controller
@@ -11,7 +11,7 @@ class AgendaController extends Controller
     /**
      * Menampilkan daftar semua agenda rapat untuk Admin dengan fitur pencarian.
      */
-    public function index(Request $request) // Tambahkan Request $request
+    public function index(Request $request)
     {
         if (Auth::user()->role !== 'admin') {
             abort(403, 'ANDA TIDAK MEMILIKI AKSES KE HALAMAN INI.');
@@ -20,17 +20,14 @@ class AgendaController extends Controller
         // Ambil kata kunci pencarian dari request
         $search = $request->query('search');
 
-        // Query dasar untuk agenda
+
         $agendas = Agenda::query()
-            ->with('user') // Eager load relasi user
-            ->latest()    // Urutkan dari yang terbaru
-            // Gunakan when() untuk menambahkan kondisi HANYA JIKA ada pencarian
+            ->with('user')
+            ->latest() 
             ->when($search, function ($query, $search) {
-                // Cari di kolom 'title' atau 'description'
                 return $query->where('title', 'like', "%{$search}%")
                              ->orWhere('description', 'like', "%{$search}%");
             })
-            // Ganti get() dengan paginate() untuk membuat halaman
             ->paginate(10); 
 
         return view('agendas.index', compact('agendas'));
@@ -39,22 +36,17 @@ class AgendaController extends Controller
     /**
      * Menampilkan daftar agenda untuk Guru dengan fitur pencarian.
      */
-    public function guruIndex(Request $request) // Tambahkan Request $request
+    public function guruIndex(Request $request)
     {
-        // Ambil kata kunci pencarian dari request
         $search = $request->query('search');
         
-        // Query dasar untuk agenda
         $agendas = Agenda::query()
-            ->with('presensi') // Eager load relasi presensi
-            ->latest()       // Urutkan dari yang terbaru
-            // Gunakan when() untuk menambahkan kondisi HANYA JIKA ada pencarian
+            ->with('presensi')
+            ->latest()
             ->when($search, function ($query, $search) {
-                // Cari di kolom 'title' atau 'description'
                 return $query->where('title', 'like', "%{$search}%")
                              ->orWhere('description', 'like', "%{$search}%");
             })
-            // Ganti get() dengan paginate() untuk membuat halaman
             ->paginate(10);
 
         return view('agendas.guru_index', compact('agendas'));
@@ -66,8 +58,6 @@ class AgendaController extends Controller
     public function show(Agenda $agenda)
     {
         $agenda->load('presensi.user');
-        
-        // Anda mungkin perlu membuat view ini: 'agendas.show' atau 'admin.agendas.show'
         return view('agendas.show', compact('agenda'));
     }
 

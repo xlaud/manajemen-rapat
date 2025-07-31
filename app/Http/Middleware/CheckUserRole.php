@@ -13,7 +13,7 @@ class CheckUserRole
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  \Closure  $next
-     * @param  string ...$roles  // PERUBAHAN: Menggunakan spread operator untuk menerima beberapa peran
+     * @param  string ...$roles 
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next, ...$roles)

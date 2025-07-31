@@ -17,7 +17,7 @@ class PresensiController extends Controller
         $search = $request->query('search');
 
         $agendas = Agenda::query()
-            ->with('presensi.user') // Eager load untuk efisiensi
+            ->with('presensi.user')
             ->when($search, function ($query, $search) {
                 // Cari berdasarkan judul agenda
                 return $query->where('title', 'like', "%{$search}%");
@@ -51,7 +51,7 @@ class PresensiController extends Controller
             'keterangan' => 'nullable|string|max:255',
         ]);
 
-        // Cek lagi untuk mencegah pengisian ganda
+        // mengecek untuk mencegah pengisian ganda
         $alreadyExists = Presensi::where('agenda_id', $agenda->id)
                                    ->where('user_id', Auth::id())
                                    ->exists();

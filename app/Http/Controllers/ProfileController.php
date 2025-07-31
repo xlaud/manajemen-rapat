@@ -32,13 +32,11 @@ class ProfileController extends Controller
 
         //Cek apakah password saat ini cocok
         if (!Hash::check($request->current_password, $user->password)) {
-            // Jika tidak cocok, kembalikan dengan pesan error
             throw ValidationException::withMessages([
                 'current_password' => 'Password yang Anda masukkan tidak cocok dengan password saat ini.',
             ]);
         }
 
-        //Update password baru ke database
         $user->update([
             'password' => Hash::make($request->password),
         ]);

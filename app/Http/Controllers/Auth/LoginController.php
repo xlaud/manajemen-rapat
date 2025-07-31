@@ -21,7 +21,6 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // Validasi input dari form: email dan password wajib diisi
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -29,14 +28,11 @@ class LoginController extends Controller
 
         // Mencoba untuk mengotentikasi pengguna
         if (Auth::attempt($credentials, $request->filled('remember-me'))) {
-            // Jika berhasil, buat session baru untuk keamanan
             $request->session()->regenerate();
 
-            // Arahkan ke halaman dashboard
             return redirect()->intended('dashboard');
         }
 
-        // Jika otentikasi gagal, kembali ke halaman login dengan pesan error
         return back()->withErrors([
             'email' => 'Email atau Password yang Anda masukkan salah.',
         ])->onlyInput('email');
